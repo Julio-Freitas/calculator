@@ -1,6 +1,8 @@
 // @ts-nocheck
 class CalcController {
   constructor() {
+    this._audio = new Audio('click.mp3');
+    this._audioOnOff = false;
     this._locale = 'pt-BR';
     this._lastOperatorDigit = '';
     this._lastNumberDigit = '';
@@ -23,6 +25,26 @@ class CalcController {
   initialize() {
     this.setDisplayDateTime();
     setInterval(() => this.setDisplayDateTime(), 1000);
+
+    this.setLastNumberToDisplay();
+    this.pasteToClipBoard();
+
+    document.querySelectorAll('.btn-ac').forEach(btn => {
+      btn.addEventListener('dblclick', event => {
+        this.toggleAudio();
+      });
+    });
+  }
+
+  toggleAudio() {
+    this._audioOnOff = !this._audioOnOff;
+  }
+
+  playAudio() {
+    if (this._audioOnOff) {
+      this._audio.currentTime = 0;
+      this._audio.play();
+    }
   }
 
   pasteToClipBoard() {
@@ -86,9 +108,13 @@ class CalcController {
   }
 
   getResult() {
-    console.log(this._operation);
-    return eval(this._operation.join(''));
+    try {
+      return eval(this._operation.join(''));
+    } catch (error) {
+      setTimeout(() => this.setError(), 1);
+    }
   }
+
   calc() {
     let lastOperation = null;
     this._lastOperatorDigit = this.getLastItem();
@@ -192,6 +218,7 @@ class CalcController {
     this.setLastNumberToDisplay();
   }
   execBtn(value, board) {
+    this.playAudio();
     switch (value) {
       case 'ac':
       case 'Escape':
@@ -289,7 +316,11 @@ class CalcController {
   }
 
   set displayCalc(value) {
-    this._displayCalcEl.innerHTML = value;
+    if (value.toString().length > 10) {
+      this.setError();
+    } else {
+      this._displayCalcEl.innerHTML = value;
+    }
   }
 
   get currentDate() {
